@@ -64,6 +64,19 @@ class RecorderTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.app.start({})
 
+    def test_recording_title_works_with_ascii_only_strftime_locale(self):
+        self.app.writer.close()
+        self.app.writer=None
+        self.session['status']='complete'
+        actual=time.strftime
+        def ascii_format(fmt,*args):
+            fmt.encode('ascii')  # Mirrors Windows 3.11 rejecting a non-locale format string.
+            return actual(fmt,*args)
+        with patch('server.time.strftime',side_effect=ascii_format):
+            result=self.app.start({})
+        self.assertTrue(result['title'].startswith('录音 '))
+        self.assertIn('月',result['title'])
+
     def test_finish_keeps_audio_and_blocks_further_uploads(self):
         self.app.ingest(self.session['id'],0,b'\0\0'*100)
         self.app.finish(self.session['id'])

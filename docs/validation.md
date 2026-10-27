@@ -39,7 +39,7 @@ node --check web/pcm-worklet.js
 node --check scripts/control.cjs
 ```
 
-The unit suite currently has 18 tests. It uses only the standard library and mocked model calls. It covers audio idempotency, out-of-order rejection, WAV output, write failure, exports, restart recovery, historical translation, caches, language-switch races, request cancellation, sealing drafts, and summary/translation concurrency.
+The unit suite currently has 19 tests. It uses only the standard library and mocked model calls. It covers audio idempotency, out-of-order rejection, WAV output, write failure, exports, restart recovery, historical translation, caches, language-switch races, request cancellation, sealing drafts, summary/translation concurrency, and recording titles on Windows with an ASCII-only date locale.
 
 With the local service running, `node tests/smoke_http.cjs` checks origin and token rejection, export path limits, script delivery, and CSP. Microphone capture, pause, resume, and stop were also exercised through the Codex in-app browser. Controller integration confirmed that the panel acknowledged chat-originated commands.
 

@@ -116,7 +116,9 @@ class Recorder:
             if source not in ('auto', *LANGUAGES) or target not in LANGUAGES:
                 raise ValueError('不支持的语言。')
             sid = time.strftime('%Y%m%d-%H%M%S')+'-'+uuid.uuid4().hex[:8]
-            self.session = {'id': sid, 'title': '录音 '+time.strftime('%m月%d日 %H:%M'),
+            stamp=time.localtime()
+            title=f'录音 {stamp.tm_mon:02d}月{stamp.tm_mday:02d}日 {stamp.tm_hour:02d}:{stamp.tm_min:02d}'
+            self.session = {'id': sid, 'title': title,
                 'status': 'recording', 'desired': 'recording', 'source': source,
                 'target': target, 'translation': bool(body.get('translation', False)),
                 'samples': 0, 'nextSeq': 0, 'pendingAsr': 0, 'pendingText': 0,
