@@ -30,5 +30,5 @@ async function ensureServer(){try{return await getState();}catch{}
    seconds:Math.round(s.samples/16000),segments:s.segments.length,pendingAsr:s.pendingAsr,
    pendingText:s.pendingText,summaryStatus:s.summaryStatus,errors:s.errors,
    notes:path.join(root,'data',s.id,'notes.md')}:null;
- console.log(JSON.stringify({url:base+'/?start=1',engine:state.engine,session,clientConnected:state.clientConnected},null,2));
+ console.log(JSON.stringify({url:base+(action==='start'?'/?start=1':'/'),engine:state.engine,session,clientConnected:state.clientConnected},null,2));
 })().catch(e=>{console.error(e.message);process.exitCode=1;});

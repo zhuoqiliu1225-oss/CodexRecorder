@@ -1,5 +1,20 @@
 # CodexRecorder
 
+## Install by pasting this into Codex
+
+Open **Codex in local mode on Windows**, then copy this prompt. Codex needs permission to run local commands and install files; a regular ChatGPT web chat cannot install software on your PC.
+
+```text
+Install https://github.com/zhuoqiliu1225-oss/CodexRecorder on this Windows PC.
+Read its README, check Python 3.11+, Node.js 18+, Git and Codex CLI, and install missing prerequisites from official sources. Reuse existing installations and never overwrite an unrelated folder.
+Clone the complete project into a suitable persistent folder, run scripts/setup.ps1 and scripts/install_skill.ps1, then run node scripts/control.cjs serve and open the returned URL in the Codex side browser without starting recording.
+Let me complete any sign-in or system permission prompts. Do not ask for an API key. Finish by checking the service is ready and showing me how to use the installed $codex-recorder skill to start, pause and stop recording.
+```
+
+The first install downloads speech weights and about **500 MB** of translation weights. Keep the downloaded project folder: the personal skill points to it. If a newly installed skill does not appear, start a new Codex chat. Microphone access is requested only when you start recording.
+
+---
+
 Record voice and meetings, watch a live transcript with translation, and get a summary — from a Codex side panel on Windows.
 
 [中文说明](README.zh-CN.md) · [Validation & latency measurements](docs/validation.md)
@@ -32,11 +47,19 @@ codex login
 
 Setup installs Python packages in `.venv` and downloads about 500 MB of local multilingual translation weights. The default `base` speech model downloads on first start. Model downloads require internet access; local transcription and translation do not require an API key.
 
-Open this repository as a local project in Codex. Ask:
+For use from any local Codex project, install the personal skill:
+
+```powershell
+.\scripts\install_skill.ps1
+```
+
+Then invoke `$codex-recorder` or ask to start recording. The installer writes a small skill and an installation pointer under your personal `.agents/skills` directory; it keeps the application in the cloned folder. It refuses to overwrite an unrelated existing skill.
+
+Alternatively, open this repository as a local project in Codex. Ask:
 
 > Start recording and translate into English.
 
-Or explicitly invoke `$recorder`. Codex runs the local controller and opens the panel in its in-app browser. Allow microphone access when prompted. The skill is currently repo-scoped: open this repository in Codex rather than copying the skill folder by itself.
+Or explicitly invoke the repository's `$recorder`. Codex runs the local controller and opens the panel in its in-app browser. Allow microphone access when prompted. Copying the repository skill folder alone is not an installation; use the personal installer above.
 
 Manual alternative:
 

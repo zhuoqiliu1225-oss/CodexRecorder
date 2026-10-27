@@ -37,9 +37,10 @@ python -m unittest discover -s tests -v
 node --check web/panel.js
 node --check web/pcm-worklet.js
 node --check scripts/control.cjs
+.\tests\test_install_skill.ps1
 ```
 
-The unit suite currently has 19 tests. It uses only the standard library and mocked model calls. It covers audio idempotency, out-of-order rejection, WAV output, write failure, exports, restart recovery, historical translation, caches, language-switch races, request cancellation, sealing drafts, summary/translation concurrency, and recording titles on Windows with an ASCII-only date locale.
+The unit suite currently has 19 tests. It uses only the standard library and mocked model calls. It covers audio idempotency, out-of-order rejection, WAV output, write failure, exports, restart recovery, historical translation, caches, language-switch races, request cancellation, sealing drafts, summary/translation concurrency, and recording titles on Windows with an ASCII-only date locale. A separate PowerShell check verifies the personal skill's installation pointer, repeat installation, and protection of unrelated existing skills.
 
 With the local service running, `node tests/smoke_http.cjs` checks origin and token rejection, export path limits, script delivery, and CSP. Microphone capture, pause, resume, and stop were also exercised through the Codex in-app browser. Controller integration confirmed that the panel acknowledged chat-originated commands.
 

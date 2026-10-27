@@ -1,5 +1,19 @@
 # CodexRecorder · 拾音录音笔
 
+## 复制这段提示词，让 Codex 帮你安装
+
+在 **Windows 版 Codex 的本地模式**中发送下面这段话。需要允许 Codex 运行本机命令、安装文件；普通 ChatGPT 网页聊天不能直接安装电脑程序。
+
+```text
+请帮我在这台 Windows 电脑上安装 https://github.com/zhuoqiliu1225-oss/CodexRecorder 。先读 README，检查 Python 3.11+、Node.js 18+、Git 和 Codex CLI，缺少的从官方来源安装，复用已有环境，不覆盖无关目录。
+把完整项目下载到合适的固定目录，运行 scripts/setup.ps1 和 scripts/install_skill.ps1，再运行 node scripts/control.cjs serve，将返回的地址打开在 Codex 侧边浏览器中，但不要自动开始录音。
+登录和系统授权由我完成，不需要 API Key。最后检查服务是否就绪，并告诉我如何用安装好的 $codex-recorder 技能开始、暂停和停止录音。
+```
+
+首次需要下载语音模型和约 **500 MB** 的翻译模型。个人技能会指向完整程序目录，请保留该目录。新装技能未出现时，开启一个新的 Codex 聊天；点击或说“开始录音”时才会请求麦克风权限。
+
+---
+
 [English](README.md) · [验证与延迟说明](docs/validation.md)
 
 Windows 优先的本地录音笔原型：在 Codex 聊天中发起录音，在侧边浏览器面板显示实时转写、可选翻译，停止后自动生成总结。
@@ -31,6 +45,8 @@ node scripts/control.cjs start
 有 NVIDIA 显卡时 `device: auto` 会尝试 CUDA，缺少依赖时回退 CPU。已有 CUDA/cuDNN 库可通过 `cuda_library_dirs` 指定目录；无需改系统 PATH。详见 [faster-whisper 官方 GPU 依赖说明](https://github.com/SYSTRAN/faster-whisper#gpu)。
 
 在 Codex 中打开仓库后使用 `$recorder` 或说“开始录音”。如果技能尚未被发现，重新打开聊天。由 Codex 在右侧内置浏览器打开命令返回的 URL；首次使用请手动允许麦克风。
+
+想在其他项目的 Codex 聊天中也使用它，可运行 `.\scripts\install_skill.ps1`，安装个人技能 `$codex-recorder`。该脚本只写入技能和程序路径，不复制模型，也不会覆盖无关的已有技能目录。
 
 也可以手动在 Codex 内置浏览器打开 `http://127.0.0.1:18764/`，点击开始录音。
 
