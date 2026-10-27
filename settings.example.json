@@ -1,0 +1,9 @@
+{
+  "port": 18764,
+  "model": "base",
+  "device": "auto",
+  "cuda_library_dirs": [],
+  "multilingual_model": "models/m2m100",
+  "codex": "codex",
+  "translation_model": ""
+}

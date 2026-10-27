@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>拾音 · Codex 录音笔</title><link rel="stylesheet" href="/panel.css"><script src="/panel.js" defer></script></head>
+<body><main>
+<header><div class="brand"><span class="brand-icon">◉</span><span>拾音 <small>CODEX RECORDER</small></span></div><span class="version">预览版 0.2</span></header>
+<section class="hero"><div class="eyebrow">让对话留下来</div><h1>专心听，<br>其余交给拾音。</h1><p>实时记录 · 双语对照 · 自动总结</p></section>
+<section class="recorder card">
+<div class="status-row"><span id="status" role="status"><i></i> 准备录音</span><span id="engine">正在加载语音模型…</span></div>
+<div id="timer">00:00<span>:00</span></div><div class="meter" aria-label="麦克风音量"><div id="level"></div></div>
+<div class="controls"><button id="start" class="primary" disabled>● 开始录音</button><button id="pause" disabled>Ⅱ 暂停</button><button id="stop" class="stop" disabled>■ 停止</button></div>
+<p id="latency" class="hint" hidden></p>
+<p class="privacy">音频与转写保存在本机。GPT 翻译和总结使用你的 Codex 登录态，文字会发送给 OpenAI。</p>
+</section>
+<section class="settings card">
+<label class="field">原文语言<select id="source"><option value="auto">自动识别</option><option value="zh">中文</option><option value="en">English</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="es">Español</option></select></label>
+<label class="switch-row"><span><b>实时翻译</b><small>原文下方显示译文</small></span><input id="translate" type="checkbox" role="switch" aria-label="实时翻译"></label>
+<label class="field" id="target-field" hidden>翻译成<select id="target"><option value="zh">简体中文</option><option value="en">English</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="es">Español</option></select></label>
+<p class="hint" id="translation-hint" hidden>切换语言后，已有内容与后续内容都会使用新语言。译文陆续更新，已翻译过的语言直接复用。GPT 翻译仍受网络与账号额度影响。</p>
+</section>
+<div id="notice" role="alert" hidden></div>
+<section class="document card"><div class="tabs"><button class="tab active" id="transcript-tab">实时文字 <span id="count">0</span></button><button class="tab" id="summary-tab">录音总结</button></div>
+<div id="queue" class="queue" hidden></div>
+<div id="transcript"><div class="empty"><div class="empty-icon">≋</div><b>文字会在这里慢慢展开</b><p>开始录音后，通常每几秒出现一段。<br>首次加载模型可能需要稍等。</p></div></div>
+<div id="summary" hidden><div class="empty"><b>结束录音后，自动整理</b><p>摘要、要点、决定和待办。</p></div></div><button id="retry-summary" hidden>重新生成总结</button>
+</section>
+<footer><span id="saved">当前尚无录音</span><div id="exports" hidden><a id="notes" download="notes.md">导出笔记</a><a id="audio" download="audio.wav">下载录音</a></div></footer>
+</main></body></html>
