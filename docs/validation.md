@@ -67,6 +67,14 @@ From another terminal:
 
 These optional checks need installed models and, for the automatically requested summary, a usable Codex login. They use synthetic speech, not private recordings. `smoke_controls.cjs` requires an explicitly started and paused test microphone session on the main port; it resumes and stops that session.
 
+## Interface layout and language checks
+
+Run `node tests/live_layout.cjs`, then open the printed localhost URL in the Codex browser. This uses the real panel HTML, styles, and JavaScript with synthetic state; it never opens a microphone or calls AI. It alternates processing counts, adds paragraphs, and repeatedly replaces empty translations with long translations.
+
+In both Chinese and English, 50 samples at 100 ms intervals measured **0 px** change in the top position and height of the status row, transcript viewport, and footer. This checks the surrounding layout; live recognition can still revise the words themselves. Content scrolls inside a fixed-height viewport. A deliberate language, tab, or window-size change can reflow the interface.
+
+`node tests/test_i18n.cjs` verifies language preference persistence, browser-language defaults, formatting, and known error translations. Browser checks also verified switching the real panel to English and restoring Chinese without changing speech or translation languages. Saved transcript and summary contents are not translated by the interface-language setting.
+
 ## Not established by these tests
 
 Long-recording stability, every supported language pair, dialects, overlapping speakers, iOS, native MCP App installation, packaged EXE distribution, and universal account eligibility remain unverified.

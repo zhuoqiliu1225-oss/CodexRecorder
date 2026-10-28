@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');
+const vm=require('node:vm');
+const fs=require('node:fs');
+const path=require('node:path');
+const saved=new Map();
+const context=vm.createContext({localStorage:{getItem:key=>saved.get(key),setItem:(key,value)=>saved.set(key,value)},navigator:{language:'en-US'},document:{documentElement:{},querySelectorAll:()=>[]}});
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../web/i18n.js'),'utf8')+';globalThis.i18n=RecorderI18n;',context);
+const i18n=context.i18n;
+assert.equal(i18n.language,'en');
+assert.equal(i18n.t('正在录音'),'Recording');
+assert.equal(i18n.t('已保存 {time} 音频 · 本机',{time:'01:23'}),'Saved 01:23 of audio · On this device');
+assert.equal(i18n.error('总结失败：Codex 登录已失效，请执行 codex login 后重试。'),'Summary failed: Codex sign-in expired. Run codex login and retry.');
+assert.equal(i18n.t('<untrusted transcript>'),'<untrusted transcript>');
+i18n.set('zh');assert.equal(i18n.t('正在录音'),'正在录音');assert.equal(saved.get('recorder.uiLanguage'),'zh');
+i18n.set('invalid');assert.equal(i18n.language,'zh');
+console.log('PASS: language preference, browser default, parameter formatting, and localized errors.');

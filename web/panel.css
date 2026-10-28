@@ -7,3 +7,10 @@
 .text-tools{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);font-size:12px}.text-tools select{max-width:none;margin-left:6px}
 
 .queue{height:34px;min-height:34px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.translation{min-height:25px}#latency{min-height:17px}#latency[hidden]{display:block!important;visibility:hidden}.stamp{min-height:17px;white-space:nowrap}
+
+/* Live content scrolls inside a fixed viewport instead of resizing the page. */
+#transcript,#summary{height:clamp(320px,55vh,560px);overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;overscroll-behavior:contain;scroll-behavior:auto}#latency{height:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.status-row{min-height:20px}#status{white-space:nowrap;flex-shrink:0}.text-tools{min-height:62px}.queue{transition:none;animation:none}#timer{font-variant-numeric:tabular-nums}.stamp{font-variant-numeric:tabular-nums}
+
+.hero h1{white-space:pre-line}.ui-language{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--line)}.text-tools label{white-space:nowrap}.text-tools button{min-width:100px}.status-row{height:20px;overflow:hidden}#engine{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+@media(max-width:420px){.text-tools{height:84px}.text-tools label{display:grid;gap:4px}.text-tools select{margin-left:0}}

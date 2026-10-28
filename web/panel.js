@@ -28,6 +28,9 @@ function selectionText(selection){
  return output.filter(Boolean).join('\n\n');
 }
 const $=id=>document.getElementById(id);
+const t=(...args)=>RecorderI18n.t(...args);
+RecorderI18n.initialize();
+$('ui-language').value=RecorderI18n.language;
 let paragraphSeconds=Number(localStorage.getItem('recorder.paragraphSeconds'))||60;
 if(![30,60,120].includes(paragraphSeconds))paragraphSeconds=60;
 $('paragraph-length').value=String(paragraphSeconds);
@@ -39,8 +42,8 @@ let settingsChain=Promise.resolve();
 let uploadChain=Promise.resolve(),uploadError=null,lastRender='',tab='transcript',polling=false,serviceId=null,settingsSession=null;
 const autoStart=new URLSearchParams(location.search).get('start')==='1';let autoAttempted=false,requestSeen=false;
 const labels={recording:'正在录音',paused:'已暂停',processing:'正在整理',complete:'录音已完成',error:'录音异常'};
-async function api(path,body,retry=true){const res=await fetch('/api/'+path,{method:body===undefined?'GET':'POST',headers:body===undefined?{}:{'Content-Type':'application/json','X-Recorder-Token':token},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(8000)});const data=await res.json();if(res.status===403&&body!==undefined&&retry){token=(await api('bootstrap')).token;return api(path,body,false);}if(!res.ok)throw Error(data.error||'请求失败');return data;}
-function notice(message){$('notice').hidden=!message;$('notice').textContent=message||'';}
+async function api(path,body,retry=true){const res=await fetch('/api/'+path,{method:body===undefined?'GET':'POST',headers:body===undefined?{}:{'Content-Type':'application/json','X-Recorder-Token':token},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(8000)});const data=await res.json();if(res.status===403&&body!==undefined&&retry){token=(await api('bootstrap')).token;return api(path,body,false);}if(!res.ok)throw Error(data.error||t('请求失败'));return data;}
+function notice(message){$('notice').hidden=!message;$('notice').dataset.message=message||'';$('notice').textContent=message?RecorderI18n.error(message):'';}
 function timeLabel(seconds){const n=Math.floor(seconds);return `${Math.floor(n/60).toString().padStart(2,'0')}:${(n%60).toString().padStart(2,'0')}`;}
 function summaryView(markdown){const content=document.createElement('div');content.id='summary-content';let table=null;for(const line of markdown.split('\n')){if(/^\s*\|/.test(line)){if(/^\s*\|[\s:|\-]+\|\s*$/.test(line))continue;if(!table){table=document.createElement('table');content.append(table);}const row=document.createElement('tr');for(const cell of line.trim().replace(/^\||\|$/g,'').split('|')){const td=document.createElement(table.rows.length?'td':'th');td.textContent=cell.trim().replace(/\*\*/g,'');row.append(td);}table.append(row);continue;}table=null;if(!line.trim())continue;const heading=line.match(/^(#{1,4})\s+(.*)/);const el=document.createElement(heading?'h'+Math.min(4,heading[1].length+1):'p');el.textContent=(heading?heading[2]:line).replace(/\*\*/g,'');content.append(el);}return content;}
 function pcm16(float){const out=new Int16Array(float.length);for(let i=0;i<float.length;i++)out[i]=Math.max(-32768,Math.min(32767,Math.round(float[i]*32767)));return out;}
@@ -70,23 +73,23 @@ async function stopRecording(){if(!recording||stopping)return;stopping=true;busy
 function render(){const s=view?.session;const status=recording?(paused?'paused':'recording'):s?.status;const active=s&&['recording','paused','processing'].includes(s.status);
  document.body.classList.toggle('has-session',!!s);
  if(s&&settingsSession!==s.id&&!recording&&!busy){settingsSession=s.id;$('source').value=s.source;$('target').value=s.target;$('translate').checked=s.translation;}
- const statusLabel=labels[status]||'准备录音';if($('status').dataset.label!==statusLabel){$('status').dataset.label=statusLabel;$('status').textContent=statusLabel;const dot=document.createElement('i');$('status').prepend(dot);}$('status').classList.toggle('live',status==='recording');
- $('engine').textContent=view?.engine.status==='ready'?(view.engine.device==='cuda'?'GPU 低延迟转写':'CPU 本地转写'):view?.engine.status==='error'?'语音模型加载失败':'正在加载并预热语音模型…';
- $('start').disabled=busy||!!active||!!s?.pendingText||view?.engine.status!=='ready';$('pause').disabled=busy||!recording;$('pause').textContent=paused?'▶ 继续':'Ⅱ 暂停';$('stop').disabled=busy||!recording;$('source').disabled=!!active;
+ const statusLabel=t(labels[status]||'准备录音');if($('status').dataset.label!==statusLabel){$('status').dataset.label=statusLabel;$('status').textContent=statusLabel;const dot=document.createElement('i');$('status').prepend(dot);}$('status').classList.toggle('live',status==='recording');
+ $('engine').textContent=t(view?.engine.status==='ready'?(view.engine.device==='cuda'?'GPU 低延迟转写':'CPU 本地转写'):view?.engine.status==='error'?'语音模型加载失败':'正在加载并预热语音模型…');
+ $('start').disabled=busy||!!active||!!s?.pendingText||view?.engine.status!=='ready';$('pause').disabled=busy||!recording;$('pause').textContent=t(paused?'▶ 继续':'Ⅱ 暂停');$('stop').disabled=busy||!recording;$('source').disabled=!!active;
  $('target-field').hidden=!$('translate').checked;$('translation-hint').hidden=!$('translate').checked;
- $('translation-hint').textContent=`切换语言后，已有内容与后续内容都会使用新语言。${view?.engine.translationMode==='local'?'当前使用本地快速翻译。':'当前使用 GPT 翻译，网络请求可能需要较长时间。'}已翻译过的语言直接复用。`;
+ $('translation-hint').textContent=t('切换语言后，已有内容与后续内容都会使用新语言。')+t(view?.engine.translationMode==='local'?'当前使用本地快速翻译。':'当前使用 GPT 翻译，网络请求可能需要较长时间。')+t('已翻译过的语言直接复用。');
  const duration=s?s.samples/16000+sampleCount/16000:0;const hours=Math.floor(duration/3600);const minutes=Math.floor(duration/60)%60;const seconds=Math.floor(duration)%60;
  $('timer').textContent=`${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}`;const small=document.createElement('span');small.textContent=':'+String(seconds).padStart(2,'0');$('timer').append(small);
  $('transcript').hidden=tab!=='transcript';$('summary').hidden=tab!=='summary';$('transcript-tab').classList.toggle('active',tab==='transcript');$('summary-tab').classList.toggle('active',tab==='summary');
  $('count').textContent=transcriptGroups(s?.segments||[],paragraphSeconds).length;
- const pending=(s?.pendingAsr||0)+(s?.pendingText||0);$('queue').hidden=false;
+ $('queue').hidden=false;
  const translationError=s?.segments.some(row=>row.translationStatus==='error');
- const captureLabel=status==='recording'?'正在录音 · ':status==='paused'?'已暂停 · ':'';
- $('queue').textContent=captureLabel+(pending?`正在处理：${s?.pendingAsr||0} 段转写 · ${s?.pendingText||0} 组翻译`:translationError?'部分译文未完成，原文已保留':status==='recording'?'文字持续更新':status==='paused'?'已收到的音频已保存':s?'文字已同步':'等待开始录音');
- const metrics=s?.metrics||{};$('latency').hidden=metrics.asrSeconds===undefined;$('latency').textContent=metrics.asrSeconds===undefined?'':`最近一段：识别 ${metrics.asrSeconds.toFixed(2)} 秒 · 排队 ${(metrics.queueSeconds||0).toFixed(2)} 秒${metrics.translationSeconds===undefined?'':` · 翻译 ${metrics.translationSeconds.toFixed(2)} 秒`}`;
- if(s){$('saved').textContent='已保存 '+timeLabel(s.samples/16000)+' 音频 · 本机';$('exports').hidden=false;$('notes').href=`/api/export/${s.id}/notes.md`;$('audio').href=`/api/export/${s.id}/audio.wav`;
-  const key=JSON.stringify([s.id,s.segments,s.summaryStatus,s.summary,paragraphSeconds,$('target').value,$('translate').checked]);if(key!==lastRender&&!selectingTranscript()){lastRender=key;if(!s.segments.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='正在等待语音，确认后的文字会显示在这里。';$('transcript').replaceChildren(empty);}if(s.segments.length)updateTranscript($('transcript'),transcriptGroups(s.segments,paragraphSeconds),$('target').value,$('translate').checked);
-   if(s.summary){$('summary').replaceChildren(summaryView(s.summary));}else{const block=document.createElement('div');block.className='empty';block.textContent=s.summaryStatus==='running'?'Codex 正在整理总结…':s.summaryStatus==='error'?'自动总结未完成，转写仍已保存。可以重新生成总结，或在聊天里继续整理。':s.status==='processing'?'正在补齐转写与翻译，随后自动总结…':'结束录音后，自动整理摘要、要点和待办。';$('summary').replaceChildren(block);}}
+ const queueLabel=status==='recording'?'正在录音 · 转写与翻译持续更新':status==='paused'?'已暂停 · 已收到的音频已保存':status==='processing'?'正在整理转写、翻译与总结':translationError?'部分译文未完成，原文已保留':s?'录音已完成 · 文字已同步':'等待开始录音';
+ if($('queue').textContent!==t(queueLabel))$('queue').textContent=t(queueLabel);
+ const metrics=s?.metrics||{};$('latency').hidden=metrics.asrSeconds===undefined;$('latency').textContent=metrics.asrSeconds===undefined?'':t('最近一段：识别 {asr} 秒 · 排队 {queue} 秒',{asr:metrics.asrSeconds.toFixed(2),queue:(metrics.queueSeconds||0).toFixed(2)})+(metrics.translationSeconds===undefined?'':t(' · 翻译 {seconds} 秒',{seconds:metrics.translationSeconds.toFixed(2)}));
+ if(s){$('saved').textContent=t('已保存 {time} 音频 · 本机',{time:timeLabel(s.samples/16000)});$('exports').hidden=false;$('notes').href=`/api/export/${s.id}/notes.md`;$('audio').href=`/api/export/${s.id}/audio.wav`;
+  const key=JSON.stringify([s.id,s.segments,s.summaryStatus,s.summary,paragraphSeconds,RecorderI18n.language,$('target').value,$('translate').checked]);if(key!==lastRender&&!selectingTranscript()){lastRender=key;if(!s.segments.length){const empty=document.createElement('div');empty.className='empty';empty.textContent=t('正在等待语音，确认后的文字会显示在这里。');$('transcript').replaceChildren(empty);}if(s.segments.length)updateTranscript($('transcript'),transcriptGroups(s.segments,paragraphSeconds),$('target').value,$('translate').checked);
+   if(s.summary){$('summary').replaceChildren(summaryView(s.summary));}else{const block=document.createElement('div');block.className='empty';block.textContent=t(s.summaryStatus==='running'?'Codex 正在整理总结…':s.summaryStatus==='error'?'自动总结未完成，转写仍已保存。可以重新生成总结，或在聊天里继续整理。':s.status==='processing'?'正在补齐转写与翻译，随后自动总结…':'结束录音后，自动整理摘要、要点和待办。');$('summary').replaceChildren(block);}}
   if(s.errors.length)notice(s.errors.join('\n'));
  }
  if(view?.engine.status==='error')notice(view.engine.error);
@@ -98,10 +101,11 @@ async function poll(){if(polling)return;polling=true;try{view=await api('state')
 $('start').onclick=startRecording;$('pause').onclick=()=>paused?resumeRecording():pauseRecording();$('stop').onclick=stopRecording;
 async function settings(){const desired={translation:$('translate').checked,target:$('target').value};render();if(view?.session){settingsChain=settingsChain.then(()=>api('settings',desired)).catch(e=>notice(e.message));await settingsChain;await poll();}}
 $('translate').onchange=settings;$('target').onchange=settings;
+$('ui-language').onchange=()=>{RecorderI18n.set($('ui-language').value);notice($('notice').dataset.message);render();};
 $('retry-summary').onclick=async()=>{try{await api('retry-summary',{});await poll();}catch(e){notice(e.message);}};
 $('transcript-tab').onclick=()=>{tab='transcript';render();};$('summary-tab').onclick=()=>{tab='summary';render();};
 $('paragraph-length').onchange=()=>{paragraphSeconds=Number($('paragraph-length').value);localStorage.setItem('recorder.paragraphSeconds',String(paragraphSeconds));render();};
-$('copy-original').onclick=async()=>{try{const text=transcriptGroups(view?.session?.segments||[],paragraphSeconds).map(group=>joinedText(group.rows.map(row=>row.text))).join('\n\n');if(!text){notice('当前没有可复制的文字。');return;}await navigator.clipboard.writeText(text);$('copy-original').textContent='已复制';setTimeout(()=>$('copy-original').textContent='复制原文',1500);}catch(e){notice('复制失败，请选中文字后按 Ctrl+C：'+e.message);}};
+$('copy-original').onclick=async()=>{try{const text=transcriptGroups(view?.session?.segments||[],paragraphSeconds).map(group=>joinedText(group.rows.map(row=>row.text))).join('\n\n');if(!text){notice('当前没有可复制的文字。');return;}await navigator.clipboard.writeText(text);$('copy-original').textContent=t('已复制');setTimeout(()=>$('copy-original').textContent=t('复制原文'),1500);}catch(e){notice('复制失败，请选中文字后按 Ctrl+C：'+e.message);}};
 window.addEventListener('beforeunload',e=>{if(recording){e.preventDefault();e.returnValue='';}});
 window.addEventListener('pagehide',()=>{stream?.getTracks().forEach(t=>t.stop());});
 // Keep selected text stable while live updates arrive, and copy only the selected

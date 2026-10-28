@@ -534,7 +534,7 @@ class Handler(BaseHTTPRequestHandler):
         if not self.allowed():
             return
         path = urlparse(self.path).path
-        if path in ('/', '/panel.js', '/panel.css', '/pcm-worklet.js'):
+        if path in ('/', '/panel.js', '/panel.css', '/i18n.js', '/pcm-worklet.js'):
             name = 'index.html' if path=='/' else path[1:]
             mime = {'html':'text/html; charset=utf-8', 'js':'text/javascript; charset=utf-8', 'css':'text/css; charset=utf-8'}[name.rsplit('.',1)[1]]
             self.reply((ROOT/'web'/name).read_bytes(), mime=mime)

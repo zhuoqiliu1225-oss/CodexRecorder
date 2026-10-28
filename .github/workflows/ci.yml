@@ -27,9 +27,12 @@ jobs:
       - name: JavaScript syntax
         run: |
           node --check web/panel.js
+          node --check web/i18n.js
           node --check web/pcm-worklet.js
           node --check scripts/control.cjs
           node tests/test_panel.cjs
+          node tests/test_i18n.cjs
+          node --check tests/live_layout.cjs
       - name: Personal skill installer
         run: ./tests/test_install_skill.ps1
       - name: Build source archive

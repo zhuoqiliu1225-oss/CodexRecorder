@@ -27,6 +27,8 @@ CodexRecorder combines a repo-scoped Codex skill, a local Python service, and a 
 
 ## What works
 
+- Chinese and English interface languages, with immediate switching and a saved preference. Interface language is independent of spoken and translation languages; it does not translate saved transcripts or summaries.
+- Fixed-height transcript and summary viewports, with a steady recording indicator so live processing does not resize the page.
 - Start, pause, resume, and stop recording from the panel or through the Codex skill.
 - Incremental local transcription, GPU auto-detection, and rolling context that revises unfinished phrases.
 - Local translation between Chinese, English, Japanese, Korean, French, German, and Spanish.
