@@ -471,6 +471,7 @@ class Recorder:
                     if self.session and self.session['id']==sid:
                         self.session['summary']=value
                         self.session['summaryStatus']='done'
+                        self.session['errors']=[e for e in self.session['errors'] if not e.startswith('总结失败：')]
                         self.session['status']='complete'
                         self.save()
             except Exception as exc:

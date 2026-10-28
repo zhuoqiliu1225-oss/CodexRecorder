@@ -11,10 +11,24 @@ class Cancelled(RuntimeError):
     pass
 
 
+def resolve_codex(settings):
+    # Desktop updates replace the versioned bin directory. A saved path may
+    # disappear while the background service also retains an outdated PATH.
+    for name in dict.fromkeys([settings.get('codex') or 'codex', 'codex']):
+        executable = shutil.which(name)
+        if executable:
+            return executable
+    local = os.environ.get('LOCALAPPDATA')
+    if local:
+        bundled = Path(local)/'OpenAI'/'Codex'/'bin'
+        candidates = [p for p in bundled.glob('*/codex.exe') if p.is_file()]
+        if candidates:
+            return str(max(candidates, key=lambda p:p.stat().st_mtime))
+    raise RuntimeError('找不到可用的 Codex CLI。请检查 Codex 安装或 local.settings.json 中的 codex 路径。')
+
+
 def run_codex(prompt, settings, runtime, cancelled=None):
-    executable = shutil.which(settings.get('codex', 'codex'))
-    if not executable:
-        raise RuntimeError('找不到 Codex CLI，请先安装并执行 codex login。')
+    executable = resolve_codex(settings)
     runtime.mkdir(parents=True, exist_ok=True)
     args = [executable, 'exec', '--ignore-user-config', '--ephemeral',
             '--skip-git-repo-check', '--sandbox', 'read-only', '--json',
