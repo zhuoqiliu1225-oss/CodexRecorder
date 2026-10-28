@@ -1,3 +1,16 @@
+// Presentation groups are independent of the short audio chunks used for recognition.
+function transcriptGroups(segments, seconds=30){
+ const groups=[];
+ for(const row of segments){let group=groups.at(-1);if(!group||row.start-group.start>=seconds){group={start:row.start,rows:[]};groups.push(group);}group.rows.push(row);}
+ return groups;
+}
+function joinedText(parts){return parts.filter(Boolean).join(' ');}
+function selectingTranscript(){const selection=window.getSelection();return selection&&!selection.isCollapsed&&$('transcript').contains(selection.anchorNode);}
+function selectionText(selection){
+ const output=[];
+ for(let i=0;i<selection.rangeCount;i++){const range=selection.getRangeAt(i);const fragment=range.cloneContents();fragment.querySelectorAll('.stamp,.pending').forEach(el=>el.remove());const lines=[];for(const node of fragment.childNodes){if(node.nodeType===3){lines.push(node.textContent);}else{const blocks=node.querySelectorAll('.original,.translation');if(blocks.length)lines.push(...Array.from(blocks,el=>el.textContent));else lines.push(node.textContent);}}output.push(lines.join('\n').trim());}
+ return output.filter(Boolean).join('\n\n');
+}
 const $=id=>document.getElementById(id);
 const client=crypto.randomUUID();
 let token='',view=null,stream=null,context=null,capture=null,sourceNode=null;
@@ -46,12 +59,12 @@ function render(){const s=view?.session;const status=recording?(paused?'paused':
  const duration=s?s.samples/16000+sampleCount/16000:0;const hours=Math.floor(duration/3600);const minutes=Math.floor(duration/60)%60;const seconds=Math.floor(duration)%60;
  $('timer').textContent=`${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}`;const small=document.createElement('span');small.textContent=':'+String(seconds).padStart(2,'0');$('timer').append(small);
  $('transcript').hidden=tab!=='transcript';$('summary').hidden=tab!=='summary';$('transcript-tab').classList.toggle('active',tab==='transcript');$('summary-tab').classList.toggle('active',tab==='summary');
- $('count').textContent=s?.segments.length||0;
+ $('count').textContent=transcriptGroups(s?.segments||[]).length;
  const pending=(s?.pendingAsr||0)+(s?.pendingText||0);$('queue').hidden=!pending;$('queue').textContent=`正在处理：${s?.pendingAsr||0} 段转写 · ${s?.pendingText||0} 组翻译`;
  const metrics=s?.metrics||{};$('latency').hidden=metrics.asrSeconds===undefined;$('latency').textContent=metrics.asrSeconds===undefined?'':`最近一段：识别 ${metrics.asrSeconds.toFixed(2)} 秒 · 排队 ${(metrics.queueSeconds||0).toFixed(2)} 秒${metrics.translationSeconds===undefined?'':` · 翻译 ${metrics.translationSeconds.toFixed(2)} 秒`}`;
  if(s){$('saved').textContent='已保存 '+timeLabel(s.samples/16000)+' 音频 · 本机';$('exports').hidden=false;$('notes').href=`/api/export/${s.id}/notes.md`;$('audio').href=`/api/export/${s.id}/audio.wav`;
-  const key=JSON.stringify([s.id,s.segments,s.summaryStatus,s.summary,$('target').value,$('translate').checked]);if(key!==lastRender){lastRender=key;if(!s.segments.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='正在等待语音，确认后的文字会显示在这里。';$('transcript').replaceChildren(empty);}if(s.segments.length){$('transcript').replaceChildren();for(const segment of s.segments){const article=document.createElement('article');article.className='utterance';const stamp=document.createElement('div');stamp.className='stamp';stamp.textContent=timeLabel(segment.start)+(segment.provisional?' · 识别中，会继续修订':'');const text=document.createElement('div');text.className='original';text.textContent=segment.text;article.append(stamp,text);
-   if($('translate').checked){const target=$('target').value;const value=segment.target===target?segment.translation:segment.translations?.[target];const translated=document.createElement('div');translated.className='translation'+(value?'':' pending');translated.textContent=value||(segment.target===target&&segment.translationStatus==='error'?'翻译失败，原文已保留':segment.translationStatus==='waiting'?'正在等待语句稳定…':`正在翻译为 ${view.languages[target]}…`);article.append(translated);}$('transcript').append(article);}}
+  const key=JSON.stringify([s.id,s.segments,s.summaryStatus,s.summary,$('target').value,$('translate').checked]);if(key!==lastRender&&!selectingTranscript()){lastRender=key;if(!s.segments.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='正在等待语音，确认后的文字会显示在这里。';$('transcript').replaceChildren(empty);}if(s.segments.length){$('transcript').replaceChildren();for(const group of transcriptGroups(s.segments)){const article=document.createElement('article');article.className='utterance';const stamp=document.createElement('div');stamp.className='stamp';stamp.textContent=timeLabel(group.start)+(group.rows.some(row=>row.provisional)?' · 识别中，会继续修订':'');const text=document.createElement('div');text.className='original';text.textContent=joinedText(group.rows.map(row=>row.text));article.append(stamp,text);
+   if($('translate').checked){const target=$('target').value;const values=group.rows.map(row=>row.target===target?row.translation:row.translations?.[target]);if(values.some(Boolean)){const translated=document.createElement('div');translated.className='translation';translated.textContent=joinedText(values);article.append(translated);}if(values.some(value=>!value)){const pending=document.createElement('div');pending.className='translation pending';pending.textContent=group.rows.some(row=>row.translationStatus==='error')?'部分翻译失败，原文已保留':`正在补齐 ${view.languages[target]} 译文…`;article.append(pending);}}$('transcript').append(article);}}
    if(s.summary){$('summary').replaceChildren(summaryView(s.summary));}else{const block=document.createElement('div');block.className='empty';block.textContent=s.summaryStatus==='running'?'Codex 正在整理总结…':s.summaryStatus==='error'?'自动总结未完成，转写仍已保存。可以重新生成总结，或在聊天里继续整理。':s.status==='processing'?'正在补齐转写与翻译，随后自动总结…':'结束录音后，自动整理摘要、要点和待办。';$('summary').replaceChildren(block);}}
   if(s.errors.length)notice(s.errors.join('\n'));
  }
@@ -68,4 +81,7 @@ $('retry-summary').onclick=async()=>{try{await api('retry-summary',{});await pol
 $('transcript-tab').onclick=()=>{tab='transcript';render();};$('summary-tab').onclick=()=>{tab='summary';render();};
 window.addEventListener('beforeunload',e=>{if(recording){e.preventDefault();e.returnValue='';}});
 window.addEventListener('pagehide',()=>{stream?.getTracks().forEach(t=>t.stop());});
+// Keep selected text stable while live updates arrive, and copy only the selected
+// portion of original/translated text (never the timestamps or processing labels).
+document.addEventListener('copy',event=>{const selection=window.getSelection();if(!selection||selection.isCollapsed||!selection.rangeCount)return;const root=$('transcript');for(let i=0;i<selection.rangeCount;i++){const range=selection.getRangeAt(i);if(!root.contains(range.startContainer)||!root.contains(range.endContainer))return;}if(event.clipboardData){event.clipboardData.setData('text/plain',selectionText(selection));event.preventDefault();}});
 (async()=>{try{token=(await api('bootstrap')).token;await poll();if(view?.session?.translation)await settings();setInterval(poll,300);setInterval(()=>{if(recording)render();},1000);}catch(e){notice(e.message);}})();

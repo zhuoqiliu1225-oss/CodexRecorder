@@ -5,6 +5,8 @@ description: 在 Windows Codex 中开始、暂停、继续或停止麦克风录�
 
 使用这个仓库的本地录音服务。仓库根目录是此技能目录的上三级。命令使用仓库根目录为工作目录。
 
+快捷启动：读完本技能后直接运行控制命令，不重复检查依赖、扫描仓库或读取源码。命令可复用已加载模型的后台服务；engine 为 loading 时先打开面板，让面板等待预热后自动开始，不反复运行 start。若沙箱内本机请求失败，使用宿主允许的本机网络/后台服务执行权限重试一次。面板打开后最多一次 status 确认录音，尚未 ready 时明确说明正在准备。服务在电脑重启后需要重新加载模型，聊天指令的响应也需要 Codex 处理时间。
+
 - 开始录音：运行 `node scripts/control.cjs start`。若 `clientConnected` 为 true，现有面板会接收开始请求，不再新开重复面板；否则读取 JSON 中的 `url`，使用可用的 Codex `open_in_codex` 浏览器工具在右侧打开该 URL。没有打开面板的工具时提供 URL，让用户在 Codex 内置浏览器打开。只有引擎 ready 且面板成功获得麦克风后才能说正在录音。首次加载模型期间说明正在准备。
 - 暂停：运行 `node scripts/control.cjs pause`。
 - 继续：运行 `node scripts/control.cjs resume`。

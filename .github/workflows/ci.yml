@@ -29,6 +29,7 @@ jobs:
           node --check web/panel.js
           node --check web/pcm-worklet.js
           node --check scripts/control.cjs
+          node tests/test_panel.cjs
       - name: Personal skill installer
         run: ./tests/test_install_skill.ps1
       - name: Build source archive

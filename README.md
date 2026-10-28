@@ -13,6 +13,8 @@ Let me complete any sign-in or system permission prompts. Do not ask for an API 
 
 The first install downloads speech weights and about **500 MB** of translation weights. Keep the downloaded project folder: the personal skill points to it. If a newly installed skill does not appear, start a new Codex chat. Microphone access is requested only when you start recording.
 
+The personal skill is available in new chats in other projects; explicitly invoke `$codex-recorder` if needed. The background service keeps models warm for subsequent starts; the first start after a reboot still loads them. Transcript display groups span about 30 seconds while recognition continues on short audio chunks. Selecting and copying transcript text excludes timestamps; live redraws wait while a text selection is active.
+
 ---
 
 Record voice and meetings, watch a live transcript with translation, and get a summary — from a Codex side panel on Windows.
