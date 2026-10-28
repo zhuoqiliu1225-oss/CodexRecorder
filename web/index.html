@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>拾音 · Codex 录音笔</title><link rel="stylesheet" href="/panel.css"><script src="/panel.js" defer></script></head>
 <body><main>
-<header><div class="brand"><span class="brand-icon">◉</span><span>拾音 <small>CODEX RECORDER</small></span></div><span class="version">预览版 0.2</span></header>
+<header><div class="brand"><span class="brand-icon">◉</span><span>拾音 <small>CODEX RECORDER</small></span></div><span class="version">预览版 0.2 · 长段落</span></header>
 <section class="hero"><div class="eyebrow">让对话留下来</div><h1>专心听，<br>其余交给拾音。</h1><p>实时记录 · 双语对照 · 自动总结</p></section>
 <section class="recorder card">
 <div class="status-row"><span id="status" role="status"><i></i> 准备录音</span><span id="engine">正在加载语音模型…</span></div>
@@ -19,6 +19,7 @@
 <div id="notice" role="alert" hidden></div>
 <section class="document card"><div class="tabs"><button class="tab active" id="transcript-tab">实时文字 <span id="count">0</span></button><button class="tab" id="summary-tab">录音总结</button></div>
 <div id="queue" class="queue" hidden></div>
+<div class="text-tools"><label>文字分段 <select id="paragraph-length"><option value="30">约 30 秒</option><option value="60" selected>约 1 分钟</option><option value="120">约 2 分钟</option></select></label><button id="copy-original">复制原文</button></div>
 <div id="transcript"><div class="empty"><div class="empty-icon">≋</div><b>文字会在这里慢慢展开</b><p>开始录音后，通常每几秒出现一段。<br>首次加载模型可能需要稍等。</p></div></div>
 <div id="summary" hidden><div class="empty"><b>结束录音后，自动整理</b><p>摘要、要点、决定和待办。</p></div></div><button id="retry-summary" hidden>重新生成总结</button>
 </section>
