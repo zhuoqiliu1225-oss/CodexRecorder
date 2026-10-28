@@ -1,5 +1,7 @@
 # CodexRecorder · 拾音录音笔
 
+[安装步骤](#安装运行) · [完整使用指南](docs/USAGE.zh-CN.md) · [English](README.md)
+
 ## 复制这段提示词，让 Codex 帮你安装
 
 在 **Windows 版 Codex 的本地模式**中发送下面这段话。需要允许 Codex 运行本机命令、安装文件；普通 ChatGPT 网页聊天不能直接安装电脑程序。
@@ -7,10 +9,12 @@
 ```text
 请帮我在这台 Windows 电脑上安装 https://github.com/zhuoqiliu1225-oss/CodexRecorder 。先读 README，检查 Python 3.11+、Node.js 18+、Git 和 Codex CLI，缺少的从官方来源安装，复用已有环境，不覆盖无关目录。
 把完整项目下载到合适的固定目录，运行 scripts/setup.ps1 和 scripts/install_skill.ps1，再运行 node scripts/control.cjs serve，将返回的地址打开在 Codex 侧边浏览器中，但不要自动开始录音。
-登录和系统授权由我完成，不需要 API Key。最后检查服务是否就绪，并告诉我如何用安装好的 $codex-recorder 技能开始、暂停和停止录音。
+登录和系统授权由我完成，不需要 API Key。首次下载模型与冷启动暖机可能需要一些时间，请提前说明，等待 engine.status 为 ready 后再确认就绪，不要反复启动服务。最后告诉我如何用安装好的 $codex-recorder 技能开始、暂停和停止录音，并打开使用指南。
 ```
 
 首次需要下载语音模型和约 **500 MB** 的翻译模型。个人技能会指向完整程序目录，请保留该目录。新装技能未出现时，开启一个新的 Codex 聊天；点击或说“开始录音”时才会请求麦克风权限。
+
+> **第一次请预留下载与暖机时间。** 依赖安装完成后，首次启动还可能下载语音模型、加载语音与翻译模型并进行预热；慢网速或 CPU 设备可能需要数分钟或更久。看到“正在加载并预热语音模型…”时请等待，出现“GPU 低延迟转写”或“CPU 本地转写”、开始按钮可用后才算就绪。电脑或后台服务重启后仍需重新加载和暖机，模型已缓存时通常无需重新下载。
 
 安装个人技能后，可在其他项目的新聊天里说“开始录音”；需要明确指定时发送 `$codex-recorder 开始录音`。后台服务会保留已预热的模型以加快后续启动，电脑重启后的首次使用仍需加载模型。面板默认按约 1 分钟合并文字段落，也可选择 30 秒或 2 分钟，短音频仍实时识别；选中文字复制时不含时间戳，选择期间暂停文字区域重绘以防选区被打断。
 
@@ -25,7 +29,7 @@ Windows 优先的本地录音笔原型：在 Codex 聊天中发起录音，在�
 - 界面语言支持中文与 English，可即时切换并记住选择；与识别语言、译文语言独立。该设置不会翻译已有录音或总结内容。
 - 文字和总结采用固定高度的可滚动区域，录音期间状态提示保持不变，避免任务数和内容高度变化顶动页面。
 - 浏览器麦克风采集，本地 16 kHz WAV 保存，暂停 / 继续 / 停止。
-- faster-whisper 在本机转写，自动尝试 GPU、启动时预热。约 2.4 秒一次滚动识别；未确认文字标注“识别中，会继续修订”，结合后续上下文修正截断词句。
+- faster-whisper 在本机转写，自动尝试 GPU、启动时预热。约 2.4 秒一次滚动识别，结合后续上下文修正截断词句；实时文字仍可能被修订。
 - 录音中或结束后可开关翻译，选择中文、英文、日文、韩文、法文、德文、西班牙文。切换后已有内容补译、后续内容使用新语言，切回已翻译过的语言复用缓存。
 - 默认本地多语种翻译用于实时显示；GPT 用于录后总结。本地模型未配置时，仍可通过用户自己已登录的 Codex CLI 翻译，但网络推理会明显更慢。
 - 不读取、复制或分发登录令牌，无需 API Key。GPT 功能仍受账号权限、网络、使用限额影响。
@@ -34,13 +38,44 @@ Windows 优先的本地录音笔原型：在 Codex 聊天中发起录音，在�
 
 ## 安装运行
 
-需要 Windows、Python 3.11+、Node.js 18+，以及可运行并已通过 ChatGPT 登录的 Codex CLI。
+**推荐方式：复制上方提示词，在 Windows Codex 的本地聊天中安装。** 如果希望手动安装，按以下顺序操作。
+
+1. 准备 Windows、Python 3.11+、Node.js 18+、Git，以及官方 Codex CLI。没有独立 CLI 时，可让 Codex 检查其随应用安装的 CLI；普通 ChatGPT 网页聊天无法替你启动本机录音。
+2. 在准备长期保留程序的目录打开 PowerShell，下载完整仓库。也可以在 GitHub 的 **Code → Download ZIP** 下载并解压，再进入包含 `README.md`、`app` 和 `scripts` 的那一层目录。不要只下载技能文件夹。
 
 ```powershell
-codex login
-.\scripts\setup.ps1
-node scripts/control.cjs start
+git clone https://github.com/zhuoqiliu1225-oss/CodexRecorder.git
+cd CodexRecorder
 ```
+
+3. 检查运行环境和 ChatGPT 登录。尚未登录时执行 `codex login`，按官方提示完成登录；无需配置 API Key。
+
+```powershell
+python --version
+node --version
+git --version
+codex login status
+```
+
+4. 安装本地依赖、下载翻译模型，并注册跨项目可用的个人技能。
+
+```powershell
+.\scripts\setup.ps1
+.\scripts\install_skill.ps1
+```
+
+5. 启动服务并暖机，此命令不会开始录音。
+
+```powershell
+node scripts/control.cjs serve
+node scripts/control.cjs status
+```
+
+让 Codex 将返回地址打开在右侧内置浏览器中。等待 `engine.status` 为 `ready`；首次下载或暖机较慢时保持页面和服务打开，不要反复运行 `start`。需要确认进度时再运行一次 `status`。
+
+6. 在 Codex 中发送 `$codex-recorder 开始录音`，首次手动允许麦克风。确认面板显示“正在录音”且计时增加后再开始讲话。若新技能没有出现，开启一个新聊天；安装到个人目录后，其他本机项目的新聊天也可调用。
+
+**安装完成的判断：** 引擎 ready、面板能打开、个人技能能被发现。是否成功生成 GPT 总结，还取决于你的 Codex 登录、网络和账号额度。
 
 首次启动默认下载多语言 `base` 语音模型。可在 `local.settings.json` 中将 `model` 设置为本地 faster-whisper 模型目录，或可下载的模型名称。模型路径和本机 Python 路径只放在这个被 Git 忽略的文件中。配置示例见 `settings.example.json`。
 
@@ -85,11 +120,13 @@ node scripts/control.cjs status
 ## 开发验证
 
 ```powershell
-python -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+node tests/test_panel.cjs
+node tests/test_i18n.cjs
 node tests/smoke_http.cjs
-python scripts/package.py
+.\.venv\Scripts\python.exe scripts/package.py
 ```
 
-首次侧边麦克风可行性验证记录保留在 `verification/RESULTS.md`。
+完整验证方法与结果见 [验证说明](docs/validation.md)。包含本机操作的原始验证记录不随源码分发。
 
 生成的 `dist/codex-recorder-0.2-windows-source.zip` 只包含源码与仓库技能，不包含录音、模型、本机配置或登录信息。它是源码预览包，尚不是免安装 EXE。解压后先安装运行环境，再用 Codex 打开该目录。

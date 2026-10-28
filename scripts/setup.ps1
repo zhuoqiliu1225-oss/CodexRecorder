@@ -19,5 +19,10 @@ if (-not $SkipTranslationModel) {
     $settings | Add-Member -NotePropertyName multilingual_model -NotePropertyValue 'models/m2m100' -Force
     $settings | ConvertTo-Json | Set-Content local.settings.json -Encoding utf8
 }
-Write-Host '准备完成。首次启动会下载语音模型。请确认 codex login status 显示 ChatGPT 登录。'
-Write-Host '在 Codex 中说“开始录音”，或运行 node scripts/control.cjs start。'
+Write-Host '依赖安装完成。首次启动仍需下载语音模型、加载并暖机；时间取决于网络、模型大小和硬件。'
+Write-Host 'Dependencies installed. The first service start still downloads, loads and warms up models; allow time for this.'
+Write-Host '接下来运行 scripts/install_skill.ps1，再运行 node scripts/control.cjs serve。'
+Write-Host 'Next: run scripts/install_skill.ps1, then node scripts/control.cjs serve (no microphone recording yet).'
+Write-Host '用 node scripts/control.cjs status 确认 engine.status 为 ready；请勿反复启动。'
+Write-Host 'Wait for engine.status=ready. Confirm codex login status uses ChatGPT, then ask $codex-recorder to start recording.'
+Write-Host '使用指南 / User guide: docs/USAGE.zh-CN.md / docs/USAGE.md'
