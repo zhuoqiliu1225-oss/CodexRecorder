@@ -615,7 +615,7 @@ class Handler(BaseHTTPRequestHandler):
                         self.app.update_settings(body.get('translation'),body.get('target'))
                     elif parsed.path == '/api/open-folder':
                         record=records.read_record(self.app.data,body.get('id',''))
-                        os.startfile(str((self.app.data/record['id']).resolve()))
+                        records.open_folder((self.app.data/record['id']).resolve())
                     elif parsed.path == '/api/retry-record-summary':
                         record=s if s and s['id']==body.get('id') else records.read_record(self.app.data,body.get('id',''))
                         if record['status']!='complete':raise ValueError('录音尚在处理中。')

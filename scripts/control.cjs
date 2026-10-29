@@ -2,6 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const {spawn} = require('node:child_process');
+const {runtimePaths}=require('./platform.cjs');
 const root=path.resolve(__dirname,'..');
 const settingsFile=path.join(root,'local.settings.json');
 const settings=fs.existsSync(settingsFile)?JSON.parse(fs.readFileSync(settingsFile,'utf8').replace(/^\uFEFF/,'')):{};
@@ -9,8 +10,9 @@ const base=`http://127.0.0.1:${settings.port||18764}`;
 async function getState(timeout=2000){return (await fetch(base+'/api/state',{signal:AbortSignal.timeout(timeout)})).json();}
 async function command(action){const auth=await (await fetch(base+'/api/bootstrap')).json();const res=await fetch(base+'/api/control',{method:'POST',headers:{'Content-Type':'application/json','X-Recorder-Token':auth.token},body:JSON.stringify({action})});const body=await res.json();if(!res.ok)throw Error(body.error);}
 async function ensureServer(){try{return await getState(500);}catch{}
- let python=settings.python||path.join(root,'.venv','Scripts','python.exe');
- if(!fs.existsSync(python))throw Error('请先运行 scripts/setup.ps1，安装本地语音环境。');
+ const runtime=runtimePaths(root);
+ let python=settings.python||runtime.python;
+ if(!fs.existsSync(python))throw Error('请先运行 '+runtime.setup+'，安装本地语音环境。');
  // pythonw avoids inheriting a Windows console-close event from the launcher.
  const windowless=path.join(path.dirname(python),'pythonw.exe');
  if(process.platform==='win32'&&fs.existsSync(windowless))python=windowless;

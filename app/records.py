@@ -2,9 +2,17 @@
 import json
 import time
 import uuid
+import os
+import sys
+import subprocess
 from io import BytesIO
 from pathlib import Path
 from xml.sax.saxutils import escape
+
+def open_folder(folder):
+    if sys.platform=='win32':os.startfile(str(folder))
+    elif sys.platform=='darwin':subprocess.Popen(['open',str(folder)],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    else:raise ValueError('Open folder supports Windows and macOS.')
 
 def atomic_text(path, text):
     path=Path(path)

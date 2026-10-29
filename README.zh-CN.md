@@ -2,6 +2,8 @@
 
 **开源许可证：[MIT](LICENSE)。** 第三方依赖和模型权重仍遵守各自许可证，详见[第三方说明](THIRD_PARTY_NOTICES.md)。
 
+**平台状态：** Windows 已实测；[macOS 安装与验收指南](docs/MACOS.md)已提供，Mac 真机麦克风与性能验收待完成。手机独立运行放在后续版本，目标是不依赖电脑。
+
 [安装步骤](#安装运行) · [新功能使用](#新功能怎么用) · [完整使用指南](docs/USAGE.zh-CN.md) · [English](README.md)
 
 ## 复制这段提示词，让 Codex 帮你安装

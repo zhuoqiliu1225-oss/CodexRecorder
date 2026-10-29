@@ -2,6 +2,8 @@
 
 **License: [MIT](LICENSE).** Third-party dependencies and model weights retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).
 
+**Platforms:** Windows (tested) · [macOS setup and acceptance checklist](docs/MACOS.md) (adaptation available; real Mac verification pending). Phone-only operation is planned separately and will not depend on a desktop computer.
+
 [中文安装与使用指南](README.zh-CN.md) · [Installation](#quick-start-on-windows) · [Using the new features](#using-the-new-features) · [User guide](docs/USAGE.md)
 
 ## Install by pasting this into Codex
