@@ -1,5 +1,7 @@
 # CodexRecorder · 拾音录音笔
 
+**开源许可证：[MIT](LICENSE)。** 第三方依赖和模型权重仍遵守各自许可证，详见[第三方说明](THIRD_PARTY_NOTICES.md)。
+
 [安装步骤](#安装运行) · [新功能使用](#新功能怎么用) · [完整使用指南](docs/USAGE.zh-CN.md) · [English](README.md)
 
 ## 复制这段提示词，让 Codex 帮你安装
