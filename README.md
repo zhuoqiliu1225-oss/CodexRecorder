@@ -1,6 +1,6 @@
 # CodexRecorder
 
-[中文安装与使用指南](README.zh-CN.md) · [Installation](#quick-start-on-windows) · [User guide](docs/USAGE.md)
+[中文安装与使用指南](README.zh-CN.md) · [Installation](#quick-start-on-windows) · [Using the new features](#using-the-new-features) · [User guide](docs/USAGE.md)
 
 ## Install by pasting this into Codex
 
@@ -21,7 +21,7 @@ The personal skill is available in new chats in other projects; explicitly invok
 
 ---
 
-Record voice and meetings, watch a live transcript with translation, and get a summary — from a Codex side panel on Windows.
+Record voice and meetings, watch live transcripts with translation, generate summaries and titles, browse saved recordings, and export PDFs from a Codex side panel on Windows.
 
 [中文说明](README.zh-CN.md) · [Validation & latency measurements](docs/validation.md)
 
@@ -31,6 +31,11 @@ CodexRecorder combines a repo-scoped Codex skill, a local Python service, and a 
 
 ## What works
 
+- **Smart following:** new text stays in view at the bottom. Scroll up or select text to hold your reading position; Back to latest resumes following.
+- **Recording history:** browse saved transcripts and summaries, open session folders, and retry historical summaries without replacing active capture.
+- **AI titles:** successful summaries generate a descriptive recording title, with a date fallback. Folders keep unique session IDs; titles are also saved in `title.txt`.
+- **PDF exports:** export transcript and summary PDFs separately into the session folder, alongside WAV, TXT, Markdown, and JSON files.
+- **Summary recovery:** summaries start once original transcription finishes, independently of translation backlogs. Transient errors retry once, and brief Windows file locks are retried during saving.
 - Chinese and English interface languages, with immediate switching and a saved preference. Interface language is independent of spoken and translation languages; it does not translate saved transcripts or summaries.
 - Fixed-height transcript and summary viewports, with a steady recording indicator so live processing does not resize the page.
 - Start, pause, resume, and stop recording from the panel or through the Codex skill.
@@ -41,6 +46,21 @@ CodexRecorder combines a repo-scoped Codex skill, a local Python service, and a 
 - Audio and local inference stay on your computer. No API key or separate API billing setup is needed. Codex account eligibility and usage limits still apply to GPT features.
 
 ![CodexRecorder preview using synthetic test speech](docs/images/preview.png)
+
+## Using the new features
+
+| Goal | Panel action |
+| --- | --- |
+| Follow new words | Scroll the transcript area to the bottom. |
+| Read or copy earlier text | Scroll up or select text to suspend following; Back to latest resumes it. |
+| Find an older recording | Open History, then select a recording to read its transcript and summary. |
+| Locate saved files | Use Open folder on the main panel or in a history entry. |
+| Regenerate a summary | Use Retry summary in the Summary tab or in history details. |
+| Export a PDF | Stop and wait for processing to finish, then choose Transcript PDF or Summary PDF. Both are also available in history details. |
+
+Each new `data/<session-id>/` folder contains `audio.wav`, `transcript.txt`, `summary.md`, `title.txt`, `notes.md`, and `session.json`. Exporting creates and saves `transcript.pdf` or `summary.pdf`. Older records remain accessible and exportable; existing titles and folders are not renamed in bulk.
+
+**Upgrading an existing installation:** stop and save first, pull the updated code, and run `.\scripts\setup.ps1` to install the new PDF dependency. Ask Codex to safely restart the background service, wait for warm-up, and refresh the panel. Chinese and English PDFs are verified; font coverage for other scripts is not fully verified. Sign-in, network, and account-limit errors remain visible rather than triggering unlimited retries.
 
 ## Quick start on Windows
 
@@ -178,12 +198,3 @@ The source ZIP in `dist/` excludes recordings, model weights, and personal setti
 - Having a ChatGPT account alone does not guarantee that the installed Codex CLI can run GPT requests.
 
 Third-party model and dependency sources are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Their licenses remain separate from this repository's code.
-
-## History, following, and PDF exports
-
-- The transcript follows new content at the bottom. Scrolling up or selecting text suspends following; Back to latest resumes it.
-- History shows saved transcripts and summaries without replacing an active capture. Details include summary retry and Open folder.
-- Successful summaries generate an AI recording title, with a date fallback. Physical folders keep unique session IDs; titles are saved in `title.txt`.
-- New records also save `transcript.txt` and `summary.md`. Exported `transcript.pdf` and `summary.pdf` are written into the same session folder. Older saved sessions can be exported too.
-- Summary generation starts once original transcription is complete, independently of the translation backlog. Transient failures retry once; sign-in and quota errors do not. Brief Windows file locks are retried during saving.
-- Update dependencies using `scripts/setup.ps1` for PDF support. Export after processing completes. Chinese and English PDFs have been verified; font coverage for other scripts has not been fully verified.
