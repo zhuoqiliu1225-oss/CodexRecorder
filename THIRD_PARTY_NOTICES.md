@@ -7,6 +7,7 @@ CodexRecorder downloads model weights separately; weights are not included in th
 | faster-whisper | Local transcription | https://github.com/SYSTRAN/faster-whisper |
 | CTranslate2 | Local inference | https://github.com/OpenNMT/CTranslate2 |
 | SentencePiece | Translation tokenization | https://github.com/google/sentencepiece |
+| ReportLab | Local transcript and summary PDF layout | https://www.reportlab.com/opensource/ |
 | M2M100 418M | Multilingual translation model; upstream model card identifies MIT | https://huggingface.co/facebook/m2m100_418M |
 | M2M100 CT2 INT8 conversion | Data-only download, pinned to revision `18e406c615ef2991fa74d53734bf66b0a6b10cb4` | https://huggingface.co/gn64/M2M100_418M_CTranslate2 |
 | OpenAI Whisper and separately selected converted models | Speech recognition weights | https://github.com/openai/whisper |
