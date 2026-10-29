@@ -16,6 +16,7 @@ import sys
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import ai
+import records
 
 LANGUAGES = {'zh': '简体中文', 'en': 'English', 'ja': '日本語', 'ko': '한국어',
              'fr': 'Français', 'de': 'Deutsch', 'es': 'Español'}
@@ -86,24 +87,24 @@ class Recorder:
                 'clientConnected': time.time()-self.last_panel_seen < 5,
                 'serviceId': self.token[:12]}, ensure_ascii=False))
 
-    def save(self):
-        if not self.session:
-            return
-        dest = self.data / self.session['id']
+    def save(self, record=None):
+        record = record if record is not None else self.session
+        if not record:return
+        dest=self.data/record['id']
         dest.mkdir(exist_ok=True)
-        temp = dest / 'session.tmp'
-        temp.write_text(json.dumps(self.session, ensure_ascii=False, indent=2), encoding='utf-8')
-        temp.replace(dest / 'session.json')
-        lines = ['# '+self.session['title'], '']
-        for s in self.session['segments']:
-            lines += [f"[{int(s['start']//60):02}:{int(s['start']%60):02}] {s['text']}", '']
-            if s.get('translation'):
-                lines += [f"{LANGUAGES.get(s.get('target'), '')}：{s['translation']}", '']
-        if self.session.get('summary'):
-            lines += ['---', '', self.session['summary']]
-        temp = dest / 'notes.tmp'
-        temp.write_text('\n'.join(lines), encoding='utf-8')
-        temp.replace(dest / 'notes.md')
+        lines=['# '+record['title'],'']
+        for row in record['segments']:
+            lines.extend([f"[{int(row['start']//60):02}:{int(row['start']%60):02}] {row['text']}",''])
+            if row.get('translation'):lines.extend([row['translation'],''])
+        if record.get('summary'):lines.extend(['---','',record['summary']])
+        files={'session.json':json.dumps(record,ensure_ascii=False,indent=2),'notes.md':'\n'.join(lines),
+               'title.txt':record['title'],'transcript.txt':'\n\n'.join(r['text'] for r in record['segments']),
+               'summary.md':record.get('summary','')}
+        for name,text in files.items():
+            try:records.atomic_text(dest/name,text)
+            except OSError:
+                message='文本保存失败：'+name+'。请检查文件占用或磁盘空间，音频与内存转写仍保留。'
+                if message not in record['errors']:record['errors'].append(message)
 
     def start(self, body):
         with self.lock:
@@ -281,7 +282,7 @@ class Recorder:
                 s = self.session
                 if not s or s['id'] != sid:
                     return
-                if not s['pendingAsr'] and not s['pendingText']:
+                if not s['pendingAsr']:
                     s['summaryStatus'] = 'running'
                     self.save()
                     self.summary_queue.put(sid)
@@ -453,7 +454,7 @@ class Recorder:
             finally:
                 with self.lock:
                     if kind=='translate':
-                        self.session['pendingText'] -= len(jobs)
+                        self.session['pendingText'] = max(0,self.session['pendingText']-len(jobs))
                     self.save()
                 for _ in jobs:
                     self.text_queue.task_done()
@@ -463,24 +464,25 @@ class Recorder:
             sid=self.summary_queue.get()
             try:
                 with self.lock:
-                    if not self.session or self.session['id']!=sid:
-                        continue
-                    rows=[dict(r) for r in self.session['segments']]
-                value=ai.summarize(rows,self.settings,self.data/'ai-runtime')
+                    record=self.session if self.session and self.session['id']==sid else records.read_record(self.data,sid)
+                    rows=[dict(r) for r in record['segments']]
+                value=ai.summarize_reliably(rows,self.settings,self.data/'ai-runtime')
                 with self.lock:
-                    if self.session and self.session['id']==sid:
-                        self.session['summary']=value
-                        self.session['summaryStatus']='done'
-                        self.session['errors']=[e for e in self.session['errors'] if not e.startswith('总结失败：')]
-                        self.session['status']='complete'
-                        self.save()
+                    record['summary']=value
+                    first=value.splitlines()[0].strip() if value else ''
+                    if first.startswith('# ') and first[2:].strip():record['title']=first[2:].strip()[:80]
+                    record['summaryStatus']='done'
+                    record['errors']=[e for e in record['errors'] if not e.startswith('总结失败：')]
+                    record['status']='complete'
+                    self.save(record)
             except Exception as exc:
                 with self.lock:
-                    if self.session and self.session['id']==sid:
-                        self.session['errors'].append('总结失败：'+str(exc)[:300])
-                        self.session['summaryStatus']='error'
-                        self.session['status']='complete'
-                        self.save()
+                    if 'record' in locals() and record.get('id')==sid:
+                        record['errors']=[e for e in record['errors'] if not e.startswith('总结失败：')]
+                        record['errors'].append('总结失败：'+str(exc)[:300])
+                        record['summaryStatus']='error'
+                        record['status']='complete'
+                        self.save(record)
             finally:
                 self.summary_queue.task_done()
 
@@ -542,10 +544,26 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(self.app.snapshot())
         elif path == '/api/bootstrap':
             self.reply({'token': self.app.token})
+        elif path == '/api/history':
+            self.reply(records.history(self.app.data))
+        elif path.startswith('/api/record/'):
+            try:self.reply(records.read_record(self.app.data,path.rsplit('/',1)[1]))
+            except (ValueError,OSError):self.reply({'error':'录音不存在'},404)
         elif path.startswith('/api/export/'):
             parts = path.split('/')
-            if len(parts)!=5 or not all(c.isalnum() or c=='-' for c in parts[3]) or parts[4] not in ('audio.wav', 'notes.md', 'session.json'):
+            if len(parts)!=5 or not parts[3] or not all(c.isascii() and (c.isalnum() or c=='-') for c in parts[3]) or parts[4] not in ('audio.wav', 'notes.md', 'session.json','transcript.pdf','summary.pdf'):
                 self.reply({'error':'不存在'},404)
+                return
+            if parts[4].endswith('.pdf'):
+                try:
+                    record=records.read_record(self.app.data,parts[3])
+                    if record['status'] in ('recording','paused','processing'):
+                        self.reply({'error':'请先停止录音并等待处理完成后导出。'},409);return
+                    raw=records.pdf_bytes(record,parts[4].split('.')[0])
+                    (self.app.data/parts[3]/parts[4]).write_bytes(raw)
+                    self.reply(raw,mime='application/pdf')
+                except (ValueError,OSError):self.reply({'error':'录音不存在'},404)
+                except ImportError:self.reply({'error':'请重新运行 setup.ps1 安装 PDF 依赖。'},503)
                 return
             file = self.app.data/parts[3]/parts[4]
             if file.is_file():
@@ -595,7 +613,19 @@ class Handler(BaseHTTPRequestHandler):
                         s['desired'] = body['status']
                     elif parsed.path == '/api/settings' and s:
                         self.app.update_settings(body.get('translation'),body.get('target'))
+                    elif parsed.path == '/api/open-folder':
+                        record=records.read_record(self.app.data,body.get('id',''))
+                        os.startfile(str((self.app.data/record['id']).resolve()))
+                    elif parsed.path == '/api/retry-record-summary':
+                        record=s if s and s['id']==body.get('id') else records.read_record(self.app.data,body.get('id',''))
+                        if record['status']!='complete':raise ValueError('录音尚在处理中。')
+                        record['status']='processing'
+                        record['summaryStatus']='running'
+                        record['errors']=[e for e in record['errors'] if not e.startswith('总结失败：')]
+                        self.app.save(record)
+                        self.app.summary_queue.put(record['id'])
                     elif parsed.path == '/api/retry-summary' and s and s['status']=='complete':
+                        s['errors']=[e for e in s['errors'] if not e.startswith('总结失败：')]
                         s['summaryStatus'] = 'running'
                         s['status'] = 'processing'
                         self.app.summary_queue.put(s['id'])

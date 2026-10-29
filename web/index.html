@@ -18,11 +18,13 @@
 <p class="hint" id="translation-hint" hidden>切换语言后，已有内容与后续内容都会使用新语言。译文陆续更新，已翻译过的语言直接复用。GPT 翻译仍受网络与账号额度影响。</p>
 </section>
 <div id="notice" role="alert" hidden></div>
+<div class="record-tools"><button id="history-button">历史记录</button><button id="open-folder">打开文件夹</button><button id="latest" hidden>回到最新</button></div>
+<dialog id="history-dialog"><button id="history-close">关闭</button><h2>历史记录</h2><div id="history-list"></div><div id="history-links"></div><pre id="history-detail"></pre></dialog>
 <section class="document card"><div class="tabs"><button class="tab active" id="transcript-tab"><span>实时文字</span> <span id="count">0</span></button><button class="tab" id="summary-tab">录音总结</button></div>
 <div id="queue" class="queue">等待开始录音</div>
 <div class="text-tools"><label><span>文字分段</span> <select id="paragraph-length"><option value="30">约 30 秒</option><option value="60" selected>约 1 分钟</option><option value="120">约 2 分钟</option></select></label><button id="copy-original">复制原文</button></div>
 <div id="transcript"><div class="empty"><div class="empty-icon">≋</div><b>文字会在这里慢慢展开</b><p data-i18n="开始录音后，通常每几秒出现一段。&#10;首次加载模型可能需要稍等。">开始录音后，通常每几秒出现一段。<br>首次加载模型可能需要稍等。</p></div></div>
 <div id="summary" hidden><div class="empty"><b>结束录音后，自动整理</b><p>摘要、要点、决定和待办。</p></div></div><button id="retry-summary" hidden>重新生成总结</button>
 </section>
-<footer><span id="saved">当前尚无录音</span><div id="exports" hidden><a id="notes" download="notes.md">导出笔记</a><a id="audio" download="audio.wav">下载录音</a></div></footer>
+<footer><span id="saved">当前尚无录音</span><div id="exports" hidden><a id="transcript-pdf" download="transcript.pdf">转写 PDF</a><a id="summary-pdf" download="summary.pdf">总结 PDF</a><a id="notes" download="notes.md">导出笔记</a><a id="audio" download="audio.wav">下载录音</a></div></footer>
 </main></body></html>

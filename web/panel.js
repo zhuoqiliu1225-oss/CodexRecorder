@@ -5,8 +5,11 @@ function transcriptGroups(segments, seconds=60){
  return groups;
 }
 function joinedText(parts){return parts.filter(Boolean).join(' ');}
-function updateTranscript(root,groups,target,translate){
+function updateTranscript(root,groups,target,translate,follow=false){
  const doc=root.ownerDocument;
+ const top=root.getBoundingClientRect().top;
+ const anchor=Array.from(root.querySelectorAll('.original,.translation')).find(el=>!el.hidden&&el.getBoundingClientRect().bottom>top);
+ const offset=anchor?.getBoundingClientRect().top;
  if(root.querySelector('.empty'))root.replaceChildren();
  groups.forEach((group,index)=>{
   let article=root.children[index];
@@ -20,6 +23,8 @@ function updateTranscript(root,groups,target,translate){
   if(translated.textContent!==value)translated.textContent=value;
  });
  while(root.children.length>groups.length)root.lastElementChild.remove();
+ if(follow)root.scrollTop=root.scrollHeight;
+ else if(anchor?.isConnected)root.scrollTop+=anchor.getBoundingClientRect().top-offset;
 }
 function selectingTranscript(){const selection=window.getSelection();return selection&&!selection.isCollapsed&&$('transcript').contains(selection.anchorNode);}
 function selectionText(selection){
@@ -28,6 +33,7 @@ function selectionText(selection){
  return output.filter(Boolean).join('\n\n');
 }
 const $=id=>document.getElementById(id);
+let followLatest=true;
 const t=(...args)=>RecorderI18n.t(...args);
 RecorderI18n.initialize();
 $('ui-language').value=RecorderI18n.language;
@@ -58,6 +64,7 @@ function samples(frame){if(!recording||paused)return;let data=frame;if(context.s
 async function release(){recording=false;paused=false;stream?.getTracks().forEach(t=>t.stop());stream=null;capture?.disconnect();sourceNode?.disconnect();capture=null;sourceNode=null;if(context){await context.close();context=null;}$('level').style.width='0%';}
 async function drainCapture(){if(!capture||paused)return;await new Promise(resolve=>{const timer=setTimeout(()=>{flushAck=null;resolve();},800);flushAck=()=>{clearTimeout(timer);flushAck=null;resolve();};capture.port.postMessage({type:'flush'});});}
 async function startRecording(){if(busy||recording)return;busy=true;notice('');$('start').disabled=true;try{
+ followLatest=true;window.getSelection()?.removeAllRanges();
  await settingsChain;
  stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true},video:false});
  context=new AudioContext({sampleRate:16000});await context.audioWorklet.addModule('/pcm-worklet.js');await context.resume();
@@ -87,8 +94,8 @@ function render(){const s=view?.session;const status=recording?(paused?'paused':
  const queueLabel=status==='recording'?'正在录音 · 转写与翻译持续更新':status==='paused'?'已暂停 · 已收到的音频已保存':status==='processing'?'正在整理转写、翻译与总结':translationError?'部分译文未完成，原文已保留':s?'录音已完成 · 文字已同步':'等待开始录音';
  if($('queue').textContent!==t(queueLabel))$('queue').textContent=t(queueLabel);
  const metrics=s?.metrics||{};$('latency').hidden=metrics.asrSeconds===undefined;$('latency').textContent=metrics.asrSeconds===undefined?'':t('最近一段：识别 {asr} 秒 · 排队 {queue} 秒',{asr:metrics.asrSeconds.toFixed(2),queue:(metrics.queueSeconds||0).toFixed(2)})+(metrics.translationSeconds===undefined?'':t(' · 翻译 {seconds} 秒',{seconds:metrics.translationSeconds.toFixed(2)}));
- if(s){$('saved').textContent=t('已保存 {time} 音频 · 本机',{time:timeLabel(s.samples/16000)});$('exports').hidden=false;$('notes').href=`/api/export/${s.id}/notes.md`;$('audio').href=`/api/export/${s.id}/audio.wav`;
-  const key=JSON.stringify([s.id,s.segments,s.summaryStatus,s.summary,paragraphSeconds,RecorderI18n.language,$('target').value,$('translate').checked]);if(key!==lastRender&&!selectingTranscript()){lastRender=key;if(!s.segments.length){const empty=document.createElement('div');empty.className='empty';empty.textContent=t('正在等待语音，确认后的文字会显示在这里。');$('transcript').replaceChildren(empty);}if(s.segments.length)updateTranscript($('transcript'),transcriptGroups(s.segments,paragraphSeconds),$('target').value,$('translate').checked);
+ if(s){$('saved').textContent=t('已保存 {time} 音频 · 本机',{time:timeLabel(s.samples/16000)});$('exports').hidden=false;$('notes').href=`/api/export/${s.id}/notes.md`;$('audio').href=`/api/export/${s.id}/audio.wav`;$('transcript-pdf').href=`/api/export/${s.id}/transcript.pdf`;$('summary-pdf').href=`/api/export/${s.id}/summary.pdf`;
+  const key=JSON.stringify([s.id,s.segments,s.summaryStatus,s.summary,paragraphSeconds,RecorderI18n.language,$('target').value,$('translate').checked]);if(key!==lastRender&&!selectingTranscript()){lastRender=key;if(!s.segments.length){const empty=document.createElement('div');empty.className='empty';empty.textContent=t('正在等待语音，确认后的文字会显示在这里。');$('transcript').replaceChildren(empty);}if(s.segments.length)updateTranscript($('transcript'),transcriptGroups(s.segments,paragraphSeconds),$('target').value,$('translate').checked,followLatest);
    if(s.summary){$('summary').replaceChildren(summaryView(s.summary));}else{const block=document.createElement('div');block.className='empty';block.textContent=t(s.summaryStatus==='running'?'Codex 正在整理总结…':s.summaryStatus==='error'?'自动总结未完成，转写仍已保存。可以重新生成总结，或在聊天里继续整理。':s.status==='processing'?'正在补齐转写与翻译，随后自动总结…':'结束录音后，自动整理摘要、要点和待办。');$('summary').replaceChildren(block);}}
   if(s.errors.length)notice(s.errors.join('\n'));
  }
@@ -112,3 +119,10 @@ window.addEventListener('pagehide',()=>{stream?.getTracks().forEach(t=>t.stop())
 // portion of original/translated text (never the timestamps or processing labels).
 document.addEventListener('copy',event=>{const selection=window.getSelection();if(!selection||selection.isCollapsed||!selection.rangeCount)return;const root=$('transcript');let intersects=false;for(let i=0;i<selection.rangeCount;i++)intersects=selection.getRangeAt(i).intersectsNode(root)||intersects;if(intersects&&event.clipboardData){event.clipboardData.setData('text/plain',selectionText(selection));event.preventDefault();}});
 (async()=>{try{token=(await api('bootstrap')).token;await poll();if(view?.session?.translation)await settings();setInterval(poll,300);setInterval(()=>{if(recording)render();},1000);}catch(e){notice(e.message);}})();
+
+$('transcript').addEventListener('scroll',()=>{const el=$('transcript');followLatest=el.scrollHeight-el.scrollTop-el.clientHeight<24;$('latest').hidden=followLatest;});
+document.addEventListener('selectionchange',()=>{if(selectingTranscript()){followLatest=false;$('latest').hidden=false;}});
+$('latest').onclick=()=>{window.getSelection()?.removeAllRanges();followLatest=true;$('transcript').scrollTop=$('transcript').scrollHeight;$('latest').hidden=true;render();};
+$('open-folder').onclick=()=>view?.session&&api('open-folder',{id:view.session.id}).catch(e=>notice(e.message));
+$('history-close').onclick=()=>$('history-dialog').close();
+$('history-button').onclick=async()=>{try{const items=await api('history');$('history-list').replaceChildren();$('history-detail').textContent='';for(const item of items){const row=document.createElement('div');row.className='history-row';const button=document.createElement('button');button.textContent=item.title||item.id;button.onclick=async()=>{try{const saved=await api('record/'+item.id);$('history-detail').textContent=saved.title+'\n\n'+saved.segments.map(s=>s.text).join('\n\n')+'\n\n'+(saved.summary||t('总结尚未生成'));$('history-links').replaceChildren();for(const [file,label] of [['audio.wav','下载录音'],['transcript.pdf','转写 PDF'],['summary.pdf','总结 PDF']]){const link=document.createElement('a');link.href='/api/export/'+item.id+'/'+file;link.textContent=t(label);link.download=file;$('history-links').append(link);}const folder=document.createElement('button');folder.textContent=t('打开文件夹');folder.onclick=()=>api('open-folder',{id:item.id}).catch(e=>notice(e.message));$('history-links').append(folder);const retry=document.createElement('button');retry.textContent=t('重新生成总结');retry.disabled=saved.status!=='complete';retry.onclick=async()=>{try{await api('retry-record-summary',{id:item.id});retry.disabled=true;retry.textContent=t('Codex 正在整理总结…');}catch(e){notice(e.message);}};$('history-links').append(retry);}catch(e){notice(e.message);}};row.append(button);$('history-list').append(row);}if(!items.length)$('history-detail').textContent=t('暂无历史记录');$('history-dialog').showModal();}catch(e){notice(e.message);}};

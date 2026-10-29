@@ -178,3 +178,12 @@ The source ZIP in `dist/` excludes recordings, model weights, and personal setti
 - Having a ChatGPT account alone does not guarantee that the installed Codex CLI can run GPT requests.
 
 Third-party model and dependency sources are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Their licenses remain separate from this repository's code.
+
+## History, following, and PDF exports
+
+- The transcript follows new content at the bottom. Scrolling up or selecting text suspends following; Back to latest resumes it.
+- History shows saved transcripts and summaries without replacing an active capture. Details include summary retry and Open folder.
+- Successful summaries generate an AI recording title, with a date fallback. Physical folders keep unique session IDs; titles are saved in `title.txt`.
+- New records also save `transcript.txt` and `summary.md`. Exported `transcript.pdf` and `summary.pdf` are written into the same session folder. Older saved sessions can be exported too.
+- Summary generation starts once original transcription is complete, independently of the translation backlog. Transient failures retry once; sign-in and quota errors do not. Brief Windows file locks are retried during saving.
+- Update dependencies using `scripts/setup.ps1` for PDF support. Export after processing completes. Chinese and English PDFs have been verified; font coverage for other scripts has not been fully verified.

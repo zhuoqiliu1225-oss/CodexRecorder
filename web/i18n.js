@@ -1,6 +1,7 @@
 // Interface strings are local and independent of speech/translation languages.
 const RecorderI18n=(()=>{
  const en={
+  '历史记录':'History','打开文件夹':'Open folder','回到最新':'Back to latest','关闭':'Close','转写 PDF':'Transcript PDF','总结 PDF':'Summary PDF','总结尚未生成':'Summary not available yet','暂无历史记录':'No saved recordings',
   '拾音':'Recorder','拾音 · Codex 录音笔':'CodexRecorder','预览版 0.2 · 稳定布局':'Preview 0.2 · Stable layout',
   '让对话留下来':'KEEP THE CONVERSATION','专心听，\n其余交给拾音。':'Listen closely.\nWe will take notes.','实时记录 · 双语对照 · 自动总结':'Live transcript · Translation · Summary',
   '准备录音':'Ready to record','正在录音':'Recording','已暂停':'Paused','正在整理':'Processing','录音已完成':'Recording complete','录音异常':'Recording error',

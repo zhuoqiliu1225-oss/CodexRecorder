@@ -30,6 +30,21 @@ class RecorderTests(unittest.TestCase):
         self.app.session = None
         self.temp.cleanup()
 
+    def test_summary_starts_without_waiting_for_translations(self):
+        self.session['pendingAsr']=0
+        self.session['pendingText']=117
+        worker=threading.Thread(target=self.app.finalize,args=(self.session['id'],),daemon=True)
+        worker.start()
+        worker.join(1)
+        self.assertFalse(worker.is_alive())
+        self.assertEqual(self.session['summaryStatus'],'running')
+        self.assertEqual(self.app.summary_queue.get_nowait(),self.session['id'])
+
+    def test_persistent_file_lock_reports_error_without_killing_worker(self):
+        with patch('server.records.atomic_text',side_effect=PermissionError('locked')):
+            self.app.save()
+        self.assertTrue(any('文本保存失败' in message for message in self.session['errors']))
+
     def test_duplicate_upload_is_idempotent_and_wav_is_valid(self):
         pcm = b'\x01\x00'*16000
         sid = self.session['id']
